@@ -1,4 +1,9 @@
+@php
+    use Carbon\Carbon;
 
+    $date = Carbon::now()->format('d/m/Y');
+    // dd($data);
+@endphp
 <table>
     <tr>
         <td colspan="7" style="text-align: center">ห้างหุ้นส่วนจำกัด ส.สปีดออโต้ปากน้ำ (สำนักงานใหญ่)</td>
@@ -23,12 +28,12 @@
     </tr>
     <tr>
         <td style="text-align: left;">ตำแหน่ง</td>
-        <td style="text-align: left;">ผู้บริหารร้าน</td>
+        <td style="text-align: left;">{{ $data['position'] }}</td>
         <td></td>
         <td></td>
         <td></td>
         <td style="text-align: left;">วันที่สั่งจ่าย</td>
-        <td style="text-align: left;">9/30/2566</td>
+        <td style="text-align: left;">{{ $date }}</td>
     </tr>
     <tr>
         <th colspan="2" style="border: 1px solid black;">รายได้</th>
@@ -38,48 +43,84 @@
         <th style="border: 1px solid black;">หมายเหตุ</th>
     </tr>
     @php
-        $count = 0;
+    $count = 0;
+        $incomePaidsCount = count($data['income_paids']);
+        $deductPaidsCount = count($data['Deduct_paids'] );
+
+        $row = max($incomePaidsCount, $deductPaidsCount);
+        // return $row;
     @endphp
-    {{-- @foreach($datasalary as $item)
-    <tr>
-        <td colspan="2" style="border: 1px solid black;">{{ $item['income'] }}</td>
-        <td style="border: 1px solid black;">{{ $item['income_amount'] }}</td>
-        <td colspan="2" style="border: 1px solid black;">{{ $item['deduction'] }}</td>
-        <td style="border: 1px solid black;">{{ $item['deduction_amount'] }}</td>
-        <td style="border: 1px solid black;">{{ $item['note'] }}</td>
-    </tr>
-    @endforeach --}}
-    @foreach ($datasalary as $item)
+
+    @if($data['total_ot'] != 0 || $data['total_late_deduct'] != 0)
         @php
-            $count++
+            $count++;
+        @endphp
+            <tr>
+            @if($data['total_ot'] != 0)
+                <td colspan="2" style="border: 1px solid black;">ค่าโอที</td>
+                <td style="border: 1px solid black; text-align: right;">{{ $data['total_ot'] }}</td>
+            @else
+                <td colspan="2" style="border: 1px solid black;">ค่าโอที</td>
+                <td style="border: 1px solid black; text-align: right;">0</td>
+            @endif
+
+            @if($data['total_late_deduct'] != 0)
+                <td colspan="2" style="border: 1px solid black; color: red;">ค่ามาสาย</td>
+                <td style="border: 1px solid black; text-align: right; color: red;">{{ $data['total_late_deduct'] }}</td>
+            @else
+                <td colspan="2" style="border: 1px solid black; color: red;">ค่ามาสาย</td>
+                <td style="border: 1px solid black; text-align: right; color: red;">0</td>
+            @endif
+                <td style="border: 1px solid black;"></td>
+            </tr>
+    @endif
+    @for ($i = 0; $i < $row; $i++)
+        @php
+            $count++;
+            $incomePaid = $data['income_paids'][$i] ?? null;
+            $deductPaid = $data['Deduct_paids'][$i] ?? null;
         @endphp
         <tr>
-            <td colspan="2" style="border: 1px solid black;">เงือนนเดือน</td>
-            <td style="border: 1px solid black;">100</td>
-            <td colspan="2" style="border: 1px solid black; color: red;">หักสาย</td>
-            <td style="border: 1px solid black; color: red;">10000000000</td>
-            <td style="border: 1px solid black;"></td>
-        </tr>
-    @endforeach
-    @for ($i = 0 ;$i < 9;$i++)
-        <tr>
-            <td colspan="2" style="border: 1px solid black;"></td>
-            <td style="border: 1px solid black;"></td>
-            <td colspan="2" style="border: 1px solid black;"></td>
-            <td style="border: 1px solid black;"></td>
+            <td colspan="2" style="border: 1px solid black;">
+                {{ $incomePaid && !empty($incomePaid['income_type']) ? $incomePaid['income_type'] : null }}
+            </td>
+            <td style="border: 1px solid black; text-align: right;">
+                {{ $incomePaid && !empty($incomePaid['paid']) ? $incomePaid['paid'] : null }}
+            </td>
+            <td colspan="2" style="border: 1px solid black; color: red;">
+                {{ $deductPaid && !empty($deductPaid['Deduct_type']) ? $deductPaid['Deduct_type'] : null }}
+            </td>
+            <td style="border: 1px solid black; color: red; text-align: right;">
+                {{ $deductPaid && !empty($deductPaid['paid']) ? $deductPaid['paid'] : null }}
+            </td>
             <td style="border: 1px solid black;"></td>
         </tr>
     @endfor
+
+    @for ($count; $count < 10; $count++)
+            <tr>
+                <td colspan="2" style="border: 1px solid black;">&nbsp;</td>
+                <td style="border: 1px solid black;"></td>
+                <td colspan="2" style="border: 1px solid black;"></td>
+                <td style="border: 1px solid black;"></td>
+                <td style="border: 1px solid black;"></td>
+            </tr>';
+    @endfor
+
     <tr>
         <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
-        <td rowspan="2" style="border: 1px solid black;">{{ $total_income }}</td>
+        <td rowspan="2" style="border: 1px solid black;">{{ $data['total_income'] }}</td>
         <td colspan="2" rowspan="2" style="border: 1px solid black; color: red; text-align: right;">รวมรายการหัก</td>
-        <td rowspan="2" style="border: 1px solid black; color: red;">{{ $total_deduction }}</td>
+        <td rowspan="2" style="border: 1px solid black; color: red;">{{ $data['total_deduction'] }}</td>
         <td style="border: 1px solid black; text-align: center;">เงินได้สุทธิ</td>
     </tr>
     <tr>
-        <td style="border: 1px solid black; text-align: center;">{{ $net_income }}</td>
+        <td style="border: 1px solid black; text-align: center;">{{ $data['net_income'] }}</td>
     </tr>
+
+
+
+
     <tr></tr>
     <tr>
         <td></td>
@@ -92,7 +133,7 @@
         <td>(นางสาวอริษา แสนในเมือง)</td>
         <td></td>
         <td></td>
-        <td>(นางสาวนาตยา นราวัฒน์)</td>
+        <td>({{ $data['name'] }})</td>
     </tr>
     <tr></tr>
     <tr>

@@ -97,10 +97,59 @@ class FileController extends Controller
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
 
-        $users = User::
-            // whereYear('created_at', $year)
-            // ->whereMonth('created_at', $month)
-            get()->toArray();
+        $users = User::get();
+        if($users->isEmpty()){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+        }
+
+        // return $users;
+
+        $users->each(function ($user) use (&$year,&$month) {
+            $income_paids = IncomePaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
+            $Deduct_paids = DeductPaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
+            $position = Position::find($user->position_id);
+            $total_income = 0;
+            $total_deduction = 0;
+
+            $income_paids->each(function ($income_paid) use (&$total_income) {
+                $income_type = IncomeType::where('code', $income_paid->incode)->first();
+                if ($income_type) {
+                    $income_paid->income_type = $income_type->name;
+                    $total_income += $income_paid->paid;
+                }
+            });
+            $Deduct_paids->each(function ($Deduct_paid) use (&$total_deduction) {
+                $Deduct_type = DeductType::where('code', $Deduct_paid->decode)->first();
+                if ($Deduct_type) {
+                    $Deduct_paid->Deduct_type = $Deduct_type->name;
+                    $total_deduction += $Deduct_paid->paid;
+                }
+            });
+            $user->position = $position->name;
+            $user->income_paids = $income_paids;
+            $user->Deduct_paids = $Deduct_paids;
+
+            $payroll = Payroll::where('user_no', $user->user_no)
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->first();
+            // $user->total_income = $total_income;
+            // $user->total_deduction = $total_deduction;
+            // $user->net_income = $total_income-$total_deduction;
+            $user->total_ot = $payroll->total_ot;
+            $user->total_late_deduct = $payroll->total_late_deduct;
+            $user->total_income = $payroll->total_income;
+            $user->total_deduction = $payroll->total_deduct;
+            $user->net_income = $payroll->total_summary;
+        });
+
+        $users = $users->toArray();
 
         // return $users;
         $result = new salaryExport($users);
@@ -118,22 +167,20 @@ class FileController extends Controller
         $date = Carbon::now();
         $thaiYear = $date->year + 543;
         $thaiDate = $date->format('d/m') . '/' . $thaiYear;
-        // return $month;
+
         $users = User::where('user_no', $user_no)
             //  ->whereYear('created_at', $year)
             //  ->whereMonth('created_at', $month)
             ->get();
-        // return $users[0]->position_id;
-        // return $position->name;
+
         if($users->isEmpty()){
-            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+            return $this->returnErrorData('ไม่พบข้อมูลพนักงาน', 404);
         }
         $position = Position::find($users[0]->position_id);
-        // $income_paids = IncomePaid::where('user_id',$users[0]->id)
-        //     ->get();
-        // $income_type = IncomeType::where('code',$income_paids[0]->incode)->first();
-        $total_income = 0;
+
+        $total_incomes = 0;
         $total_deduction = 0;
+
         $users->each(function ($user) use (&$year, &$month) {
             $income_paids = IncomePaid::where('user_id', $user->id)
                 ->whereYear('created_at', $year)
@@ -144,11 +191,11 @@ class FileController extends Controller
                 ->whereMonth('created_at', $month)
                 ->get();
 
-            $income_paids->each(function ($income_paid) use (&$total_income) {
+            $income_paids->each(function ($income_paid) use (&$total_incomes) {
                 $income_type = IncomeType::where('code', $income_paid->incode)->first();
                 if ($income_type) {
                     $income_paid->income_type = $income_type->name;
-                    $total_income += $income_paid->paid;
+                    $total_incomes += $income_paid->paid;
                 }
             });
             $Deduct_paids->each(function ($Deduct_paid) use (&$total_deduction) {
@@ -160,21 +207,19 @@ class FileController extends Controller
             });
             $user->income_paids = $income_paids;
             $user->Deduct_paids = $Deduct_paids;
-            $user->total_income = $total_income;
+            $user->total_income = $total_incomes;
             $user->total_deduction = $total_deduction;
-            $user->net_income = $total_income - $total_deduction;
+            $user->net_income = $total_incomes - $total_deduction;
         });
-
 
         // return $position->name;
         if ($users->isEmpty()) {
-            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+            return $this->returnErrorData('ไม่พบข้อมูลพนักงาน', 404);
         }
 
-
         $payroll = Payroll::where('user_no', $user_no)
-            ->where('month', $month)
-            ->where('year', $year)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
             ->first();
 
         $content = '
@@ -217,40 +262,71 @@ class FileController extends Controller
                     <th style="border: 1px solid black;">หมายเหตุ</th>
                 </tr>';
         $count = 0;
-        // foreach ($data['datasalary'] as $item) {
-        //     $count++;
-        //     $content .= '
-        //     <tr>
-        //         <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
-        //         <td style="border: 1px solid black;">' . $item['income_amount'] . '</td>
-        //         <td colspan="2" style="border: 1px solid black; color: red;">' . $item['deduction'] . '</td>
-        //         <td style="border: 1px solid black; color: red;">' . $item['deduction_amount'] . '</td>
-        //         <td style="border: 1px solid black;">' . $item['note'] . '</td>
-        //     </tr>';
-        // }
-        for ($i = 0; $i < 10; $i++) {
+        $incomePaidsCount = count($users[0]->income_paids);
+        $deductPaidsCount = count($users[0]->Deduct_paids);
+
+        $row = max($incomePaidsCount, $deductPaidsCount);
+        // return $row;
+        if($payroll->total_ot != 0 || $payroll->total_late_deduct != 0){
+            $count++;
+            $content .= '
+                <tr>';
+                if($payroll->total_ot != 0)
+                {
+                    $content .='
+                        <td colspan="2" style="border: 1px solid black;">' . 'ค่าโอที' .'</td>
+                        <td style="border: 1px solid black; text-align: right;">' .$payroll->total_ot. '</td>
+                    ';
+                }else{
+                    $content .= '
+                        <td colspan="2" style="border: 1px solid black;">' . 'ค่าโอที' . '</td>
+                        <td style="border: 1px solid black; text-align: right;">' .'0'. '</td>
+                    ';
+                }
+
+                if($payroll->total_late_deduct != 0)
+                {
+                    $content .='
+                        <td colspan="2" style="border: 1px solid black; color: red;">' . 'ค่ามาสาย' .'</td>
+                        <td style="border: 1px solid black; text-align: right; color: red;">' .$payroll->total_late_deduct. '</td>
+                    ';
+                }else{
+                    $content .= '
+                        <td colspan="2" style="border: 1px solid black; color: red;">' . 'ค่ามาสาย' . '</td>
+                        <td style="border: 1px solid black; text-align: right; color: red;">' .'0'. '</td>
+                    ';
+                }
+            $content .='
+                    <td style="border: 1px solid black;">' . '</td>
+                </tr>
+            ';
+        }
+        for ($i = 0; $i < $row; $i++) {
             $count++;
             $content .= '
                 <tr>
                     <td colspan="2" style="border: 1px solid black;">' . (
-                !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
-                ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
-            ) . '</td>
-                    <td style="border: 1px solid black; text-align: right;">' . (
-                !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
-                ? $users[0]->income_paids[$i]->paid : null
-            ) . '</td>
-                    <td colspan="2" style="border: 1px solid black; color: red;">' . (
-                !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
-                ? $users[0]->Deduct_paids[$i]->Deduct_type : null
-            ) . '</td>
-                    <td style="border: 1px solid black; color: red; text-align: right;">' . (
-                !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
-                ? $users[0]->Deduct_paids[$i]->paid : null
-            ) . '</td>
+                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
+                        ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
+                    ) . '</td>
+                            <td style="border: 1px solid black; text-align: right;">' . (
+                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
+                        ? $users[0]->income_paids[$i]->paid : '&nbsp;'
+                    ) . '</td>
+                            <td colspan="2" style="border: 1px solid black; color: red;">' . (
+                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
+                        ? $users[0]->Deduct_paids[$i]->Deduct_type :'&nbsp;'
+                    ) . '</td>
+                            <td style="border: 1px solid black; color: red; text-align: right;">' . (
+                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
+                        ? $users[0]->Deduct_paids[$i]->paid : '&nbsp;'
+                    ) . '</td>
                     <td style="border: 1px solid black;">' . '</td>
                 </tr>';
         }
+
+
+
 
         for ($count; $count < 10; $count++) {
             $content .= '
@@ -264,10 +340,9 @@ class FileController extends Controller
         }
 
         $total = $payroll->total_summary ?? 0;
-
         $total_income = $payroll->total_income ?? 0;
-
         $total_deduct = $payroll->total_deduct ?? 0;
+
         $content .= '
                 <tr>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
