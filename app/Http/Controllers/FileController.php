@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exports\salaryExport;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -85,43 +87,30 @@ class FileController extends Controller
     }
 
     public function excel_payslip(Request $request)
-    {   //groupby name
-        $data = [
-            'ben' => [
-                'test' => '',
-            ],
-            'ten' => [
-                'test'=> '1',
-            ]
-        ];
+    {
+        $date = $request->input('date', Carbon::now()->format('Y-m'));
+        $Date = Carbon::createFromFormat('Y-m', $date);
 
-        // return $datapage;
+        $users = User::whereYear('created_at', $Date->year)
+                    ->whereMonth('created_at', $Date->month)
+                    ->get();
 
-        $result = new salaryExport($data);
+        return $users;
+
+        $result = new salaryExport($users);
         return Excel::download($result, 'saraly.xlsx');
     }
     public function pdf_payslip(Request $request)
     {   //ฟิวเตอร์ name
-        $name_id = $request->name_id;
+        $user_no = $request->user_no;
+        $date = $request->date; // '2024-05'
+        $Date = Carbon::createFromFormat('Y-m', $date);
 
-        $data = [
-            'name' => 'นางสาวนาตยา นราวัฒน์',
-            'total_income' => '15,020',
-            'total_deduction' => '1,703',
-            'net_income' => '13,317',
-            'datasalary' => [
-                [
-                    'income' => 'เงินเดือน',
-                    'income_amount' =>
-                    '15,000', 'deduction' =>
-                    'หักสาย', 'deduction_amount' =>
-                    '228', 'note' => ''
-                ],
-                ['income' => 'ล่วงเวลา', 'income_amount' => '20', 'deduction' => 'หักลา 1 วัน', 'deduction_amount' => '1,000', 'note' => ''],
-                ['income' => 'ทำงานในวันหยุด', 'income_amount' => '-', 'deduction' => 'หักเบิกล่วงหน้า', 'deduction_amount' => '-', 'note' => ''],
-                ['income' => '', 'income_amount' => '', 'deduction' => 'หักค่าประกันสังคม', 'deduction_amount' => '475', 'note' => '']
-            ]
-        ];
+        $users = User::where('user_no', $user_no)
+                     ->whereYear('created_at', $Date->year)
+                     ->whereMonth('created_at', $Date->month)
+                     ->get();
+
 
         $content = '
             <table style="width: 100%; border-collapse: collapse; font-size: 20px;">
