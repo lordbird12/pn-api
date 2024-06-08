@@ -114,6 +114,7 @@ class FileController extends Controller
         }
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
+
         $date = Carbon::now();
         $thaiYear = $date->year + 543;
         $thaiDate = $date->format('d/m') . '/' . $thaiYear;
@@ -123,6 +124,10 @@ class FileController extends Controller
             //  ->whereMonth('created_at', $month)
             ->get();
         // return $users[0]->position_id;
+        // return $position->name;
+        if($users->isEmpty()){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+        }
         $position = Position::find($users[0]->position_id);
         // $income_paids = IncomePaid::where('user_id',$users[0]->id)
         //     ->get();

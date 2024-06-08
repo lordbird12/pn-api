@@ -23,7 +23,8 @@ class salaryExport implements WithMultipleSheets
     {
         $sheets = [];
 
-        foreach ($this->data as $name => $datasalary) {
+        foreach ($this->data as $datasalary) {
+            $name = $datasalary['name'];
             $sheets[] = new salarynameExport($datasalary, $name); //แยกตามคน group ตามคน
         }
         return $sheets;
