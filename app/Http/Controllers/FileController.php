@@ -98,21 +98,21 @@ class FileController extends Controller
         $year = $request->input('year', Carbon::now()->format('Y'));
 
         $users = User::get();
-        if($users->isEmpty()){
+        if ($users->isEmpty()) {
             return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
         }
 
         // return $users;
 
-        $users->each(function ($user) use (&$year,&$month) {
+        $users->each(function ($user) use (&$year, &$month) {
             $income_paids = IncomePaid::where('user_id', $user->id)
-                                        ->whereYear('created_at', $year)
-                                        ->whereMonth('created_at', $month)
-                                        ->get();
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->get();
             $Deduct_paids = DeductPaid::where('user_id', $user->id)
-                                        ->whereYear('created_at', $year)
-                                        ->whereMonth('created_at', $month)
-                                        ->get();
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->get();
             $position = Position::find($user->position_id);
             $total_income = 0;
             $total_deduction = 0;
@@ -173,7 +173,7 @@ class FileController extends Controller
             //  ->whereMonth('created_at', $month)
             ->get();
 
-        if($users->isEmpty()){
+        if ($users->isEmpty()) {
             return $this->returnErrorData('ไม่พบข้อมูลพนักงาน', 404);
         }
         $position = Position::find($users[0]->position_id);
@@ -267,36 +267,34 @@ class FileController extends Controller
 
         $row = max($incomePaidsCount, $deductPaidsCount);
         // return $row;
-        if($payroll->total_ot != 0 || $payroll->total_late_deduct != 0){
+        if ($payroll->total_ot != 0 || $payroll->total_late_deduct != 0) {
             $count++;
             $content .= '
                 <tr>';
-                if($payroll->total_ot != 0)
-                {
-                    $content .='
-                        <td colspan="2" style="border: 1px solid black;">' . 'ค่าโอที' .'</td>
-                        <td style="border: 1px solid black; text-align: right;">' .$payroll->total_ot. '</td>
-                    ';
-                }else{
-                    $content .= '
+            if ($payroll->total_ot != 0) {
+                $content .= '
                         <td colspan="2" style="border: 1px solid black;">' . 'ค่าโอที' . '</td>
-                        <td style="border: 1px solid black; text-align: right;">' .'0'. '</td>
+                        <td style="border: 1px solid black; text-align: right;">' . $payroll->total_ot . '</td>
                     ';
-                }
+            } else {
+                $content .= '
+                        <td colspan="2" style="border: 1px solid black;">' . 'ค่าโอที' . '</td>
+                        <td style="border: 1px solid black; text-align: right;">' . '0' . '</td>
+                    ';
+            }
 
-                if($payroll->total_late_deduct != 0)
-                {
-                    $content .='
-                        <td colspan="2" style="border: 1px solid black; color: red;">' . 'ค่ามาสาย' .'</td>
-                        <td style="border: 1px solid black; text-align: right; color: red;">' .$payroll->total_late_deduct. '</td>
-                    ';
-                }else{
-                    $content .= '
+            if ($payroll->total_late_deduct != 0) {
+                $content .= '
                         <td colspan="2" style="border: 1px solid black; color: red;">' . 'ค่ามาสาย' . '</td>
-                        <td style="border: 1px solid black; text-align: right; color: red;">' .'0'. '</td>
+                        <td style="border: 1px solid black; text-align: right; color: red;">' . $payroll->total_late_deduct . '</td>
                     ';
-                }
-            $content .='
+            } else {
+                $content .= '
+                        <td colspan="2" style="border: 1px solid black; color: red;">' . 'ค่ามาสาย' . '</td>
+                        <td style="border: 1px solid black; text-align: right; color: red;">' . '0' . '</td>
+                    ';
+            }
+            $content .= '
                     <td style="border: 1px solid black;">' . '</td>
                 </tr>
             ';
@@ -306,21 +304,21 @@ class FileController extends Controller
             $content .= '
                 <tr>
                     <td colspan="2" style="border: 1px solid black;">' . (
-                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
-                        ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
-                    ) . '</td>
+                !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
+                ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
+            ) . '</td>
                             <td style="border: 1px solid black; text-align: right;">' . (
-                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
-                        ? $users[0]->income_paids[$i]->paid : '&nbsp;'
-                    ) . '</td>
+                !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
+                ? $users[0]->income_paids[$i]->paid : '&nbsp;'
+            ) . '</td>
                             <td colspan="2" style="border: 1px solid black; color: red;">' . (
-                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
-                        ? $users[0]->Deduct_paids[$i]->Deduct_type :'&nbsp;'
-                    ) . '</td>
+                !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
+                ? $users[0]->Deduct_paids[$i]->Deduct_type : '&nbsp;'
+            ) . '</td>
                             <td style="border: 1px solid black; color: red; text-align: right;">' . (
-                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
-                        ? $users[0]->Deduct_paids[$i]->paid : '&nbsp;'
-                    ) . '</td>
+                !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
+                ? $users[0]->Deduct_paids[$i]->paid : '&nbsp;'
+            ) . '</td>
                     <td style="border: 1px solid black;">' . '</td>
                 </tr>';
         }

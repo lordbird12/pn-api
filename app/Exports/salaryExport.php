@@ -55,7 +55,6 @@ class salarynameExport implements FromView, WithTitle
             // 'total_deduction' => $total_deduction,
             // 'net_income' => $net_income,
         ]);
-
     }
 
     public function title(): string

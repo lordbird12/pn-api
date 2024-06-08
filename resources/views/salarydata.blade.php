@@ -38,25 +38,25 @@
     <tr>
         <th colspan="2" style="border: 1px solid black;">รายได้</th>
         <th style="border: 1px solid black;">จำนวนเงิน</th>
-        <th colspan="2" style="border: 1px solid black; color: red;" >รายการหัก</th>
+        <th colspan="2" style="border: 1px solid black; color: red;">รายการหัก</th>
         <th style="border: 1px solid black; color: red;">จำนวนเงิน</th>
         <th style="border: 1px solid black;">หมายเหตุ</th>
     </tr>
     @php
-    $count = 0;
+        $count = 0;
         $incomePaidsCount = count($data['income_paids']);
-        $deductPaidsCount = count($data['Deduct_paids'] );
+        $deductPaidsCount = count($data['Deduct_paids']);
 
         $row = max($incomePaidsCount, $deductPaidsCount);
         // return $row;
     @endphp
 
-    @if($data['total_ot'] != 0 || $data['total_late_deduct'] != 0)
+    @if ($data['total_ot'] != 0 || $data['total_late_deduct'] != 0)
         @php
             $count++;
         @endphp
-            <tr>
-            @if($data['total_ot'] != 0)
+        <tr>
+            @if ($data['total_ot'] != 0)
                 <td colspan="2" style="border: 1px solid black;">ค่าโอที</td>
                 <td style="border: 1px solid black; text-align: right;">{{ $data['total_ot'] }}</td>
             @else
@@ -64,15 +64,15 @@
                 <td style="border: 1px solid black; text-align: right;">0</td>
             @endif
 
-            @if($data['total_late_deduct'] != 0)
+            @if ($data['total_late_deduct'] != 0)
                 <td colspan="2" style="border: 1px solid black; color: red;">ค่ามาสาย</td>
                 <td style="border: 1px solid black; text-align: right; color: red;">{{ $data['total_late_deduct'] }}</td>
             @else
                 <td colspan="2" style="border: 1px solid black; color: red;">ค่ามาสาย</td>
                 <td style="border: 1px solid black; text-align: right; color: red;">0</td>
             @endif
-                <td style="border: 1px solid black;"></td>
-            </tr>
+            <td style="border: 1px solid black;"></td>
+        </tr>
     @endif
     @for ($i = 0; $i < $row; $i++)
         @php
@@ -98,13 +98,13 @@
     @endfor
 
     @for ($count; $count < 10; $count++)
-            <tr>
-                <td colspan="2" style="border: 1px solid black;">&nbsp;</td>
-                <td style="border: 1px solid black;"></td>
-                <td colspan="2" style="border: 1px solid black;"></td>
-                <td style="border: 1px solid black;"></td>
-                <td style="border: 1px solid black;"></td>
-            </tr>';
+        <tr>
+            <td colspan="2" style="border: 1px solid black;">&nbsp;</td>
+            <td style="border: 1px solid black;"></td>
+            <td colspan="2" style="border: 1px solid black;"></td>
+            <td style="border: 1px solid black;"></td>
+            <td style="border: 1px solid black;"></td>
+        </tr>';
     @endfor
 
     <tr>
@@ -145,4 +145,3 @@
         <td>(นางสาวนาตยา นราวัฒน์)</td>
     </tr>
 </table>
-
