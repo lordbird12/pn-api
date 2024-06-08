@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exports\salaryExport;
+use App\Models\DeductPaid;
+use App\Models\DeductType;
+use App\Models\IncomePaid;
+use App\Models\IncomeType;
 use App\Models\Position;
 use App\Models\User;
 use Carbon\Carbon;
@@ -116,6 +120,37 @@ class FileController extends Controller
                      ->get();
         // return $users[0]->position_id;
         $position = Position::find($users[0]->position_id);
+        // $income_paids = IncomePaid::where('user_id',$users[0]->id)
+        //     ->get();
+        // $income_type = IncomeType::where('code',$income_paids[0]->incode)->first();
+        $total_income = 0;
+        $total_deduction = 0;
+        $users->each(function ($user) {
+            $income_paids = IncomePaid::where('user_id', $user->id)->get();
+            $Deduct_paids = DeductPaid::where('user_id', $user->id)->get();
+
+            $income_paids->each(function ($income_paid) use (&$total_income) {
+                $income_type = IncomeType::where('code', $income_paid->incode)->first();
+                if ($income_type) {
+                    $income_paid->income_type = $income_type->name;
+                    $total_income += $income_paid->paid;
+                }
+            });
+            $Deduct_paids->each(function ($Deduct_paid) use (&$total_deduction) {
+                $Deduct_type = DeductType::where('code', $Deduct_paid->decode)->first();
+                if ($Deduct_type) {
+                    $Deduct_paid->Deduct_type = $Deduct_type->name;
+                    $total_deduction += $Deduct_paid->paid;
+                }
+            });
+            $user->income_paids = $income_paids;
+            $user->Deduct_paids = $Deduct_paids;
+            $user->total_income = $total_income;
+            $user->total_deduction = $total_deduction;
+            $user->net_income = $total_income-$total_deduction;
+        });
+
+
         // return $position->name;
         if($users->isEmpty()){
             return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
@@ -162,8 +197,9 @@ class FileController extends Controller
                     <th style="border: 1px solid black; color: red;">จำนวนเงิน</th>
                     <th style="border: 1px solid black;">หมายเหตุ</th>
                 </tr>';
-
+            $count = 0;
             // foreach ($data['datasalary'] as $item) {
+            //     $count++;
             //     $content .= '
             //     <tr>
             //         <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
@@ -173,8 +209,31 @@ class FileController extends Controller
             //         <td style="border: 1px solid black;">' . $item['note'] . '</td>
             //     </tr>';
             // }
+            for($i = 0; $i < 10; $i++){
+                $count++;
+                $content .= '
+                <tr>
+                    <td colspan="2" style="border: 1px solid black;">' . (
+                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
+                        ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
+                    ). '</td>
+                    <td style="border: 1px solid black;">' . (
+                        !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
+                        ? $users[0]->income_paids[$i]->paid : null
+                    ). '</td>
+                    <td colspan="2" style="border: 1px solid black; color: red;">' . (
+                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
+                        ? $users[0]->Deduct_paids[$i]->Deduct_type : null
+                    ). '</td>
+                    <td style="border: 1px solid black; color: red;">' . (
+                        !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
+                        ? $users[0]->Deduct_paids[$i]->paid :null
+                    ). '</td>
+                    <td style="border: 1px solid black;">' . '</td>
+                </tr>';
+            }
 
-            for ($i = 0; $i < 9; $i++) {
+            for ($count; $count < 10; $count++) {
                 $content .= '
                 <tr>
                     <td colspan="2" style="border: 1px solid black;">&nbsp;</td>
@@ -188,13 +247,13 @@ class FileController extends Controller
             $content .= '
                 <tr>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
-                    <td rowspan="2" style="border: 1px solid black;">' . /*$data['total_income']*/  '</td>
+                    <td rowspan="2" style="border: 1px solid black;">' . $users[0]->total_income  .'</td>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; color: red; text-align: right;">รวมรายการหัก</td>
-                    <td rowspan="2" style="border: 1px solid black; color: red;">' . /*$data['total_deduction']*/  '</td>
+                    <td rowspan="2" style="border: 1px solid black; color: red;">' . $users[0]->total_deduction . '</td>
                     <td style="border: 1px solid black; text-align: center;">เงินได้สุทธิ</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid black;">' . /*$data['net_income'] */ '</td>
+                    <td style="border: 1px solid black;">' . $users[0]->net_income . '</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
