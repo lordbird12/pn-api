@@ -230,5 +230,5 @@ Route::get('/export_pdf_payroll/{id}', [Controller::class, 'pay_slip']);
 Route::post('/upload_file', [UploadController::class, 'uploadFile']);
 
 //export pdf excel word
-Route::get('/salary_test', [FileController::class,'excel_pbird']);
-Route::get('/salary_pdf', [FileController::class,'pdf_pbird']);
+Route::get('/excel_payslip', [FileController::class,'excel_payslip']);
+Route::get('/pdf_payslip', [FileController::class,'pdf_payslip']);
