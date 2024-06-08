@@ -144,6 +144,7 @@ class UserController extends Controller
             $Item->email = $request->email;
             $Item->phone = $request->phone;
             $Item->ot = $request->ot;
+            $Item->salary = $request->salary;
 
             if ($request->image && $request->image != null && $request->image != 'null') {
                 $Item->image = $this->uploadImage($request->image, '/images/users/');
@@ -251,6 +252,7 @@ class UserController extends Controller
             $Item->email = $request->email;
             $Item->phone = $request->phone;
             $Item->ot = $request->ot;
+            $Item->salary = $request->salary;
 
             if ($request->image && $request->image != null && $request->image != 'null') {
                 $Item->image = $this->uploadImage($request->image, '/images/users/');

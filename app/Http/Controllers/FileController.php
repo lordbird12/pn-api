@@ -92,8 +92,8 @@ class FileController extends Controller
         $Date = Carbon::createFromFormat('Y-m', $date);
 
         $users = User::whereYear('created_at', $Date->year)
-                    ->whereMonth('created_at', $Date->month)
-                    ->get();
+            ->whereMonth('created_at', $Date->month)
+            ->get();
 
         return $users;
 
@@ -104,12 +104,10 @@ class FileController extends Controller
     {   //ฟิวเตอร์ name
         $user_no = $request->user_no;
         $date = $request->date; // '2024-05'
-        $Date = Carbon::createFromFormat('Y-m', $date);
+
 
         $users = User::where('user_no', $user_no)
-                     ->whereYear('created_at', $Date->year)
-                     ->whereMonth('created_at', $Date->month)
-                     ->get();
+            ->first();
 
 
         $content = '
@@ -128,7 +126,7 @@ class FileController extends Controller
                 </tr>
                 <tr>
                     <td style="text-align: left; width: 70px;">ชื่อพนักงาน</td>
-                    <td style="text-align: left; width: 200px;">' . $data['name'] . '</td>
+                    <td style="text-align: left; width: 200px;">' . $users['name'] . '</td>
                     <td style="text-align: left; width: 65px;"></td>
                     <td style="text-align: left; width: 110px;"></td>
                     <td style="text-align: left; width: 70px;"></td>
@@ -152,19 +150,19 @@ class FileController extends Controller
                     <th style="border: 1px solid black;">หมายเหตุ</th>
                 </tr>';
 
-            foreach ($data['datasalary'] as $item) {
-                $content .= '
-                <tr>
-                    <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
-                    <td style="border: 1px solid black;">' . $item['income_amount'] . '</td>
-                    <td colspan="2" style="border: 1px solid black; color: red;">' . $item['deduction'] . '</td>
-                    <td style="border: 1px solid black; color: red;">' . $item['deduction_amount'] . '</td>
-                    <td style="border: 1px solid black;">' . $item['note'] . '</td>
-                </tr>';
-            }
+        // foreach ($data['datasalary'] as $item) {
+        //     $content .= '
+        //         <tr>
+        //             <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
+        //             <td style="border: 1px solid black;">' . $item['income_amount'] . '</td>
+        //             <td colspan="2" style="border: 1px solid black; color: red;">' . $item['deduction'] . '</td>
+        //             <td style="border: 1px solid black; color: red;">' . $item['deduction_amount'] . '</td>
+        //             <td style="border: 1px solid black;">' . $item['note'] . '</td>
+        //         </tr>';
+        // }
 
-            for ($i = 0; $i < 9; $i++) {
-                $content .= '
+        for ($i = 0; $i < 9; $i++) {
+            $content .= '
                 <tr>
                     <td colspan="2" style="border: 1px solid black;">&nbsp;</td>
                     <td style="border: 1px solid black;"></td>
@@ -172,18 +170,18 @@ class FileController extends Controller
                     <td style="border: 1px solid black;"></td>
                     <td style="border: 1px solid black;"></td>
                 </tr>';
-            }
+        }
 
-            $content .= '
+        $content .= '
                 <tr>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
-                    <td rowspan="2" style="border: 1px solid black;">' . $data['total_income'] . '</td>
+                    <td rowspan="2" style="border: 1px solid black;">1111</td>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; color: red; text-align: right;">รวมรายการหัก</td>
-                    <td rowspan="2" style="border: 1px solid black; color: red;">' . $data['total_deduction'] . '</td>
+                    <td rowspan="2" style="border: 1px solid black; color: red;">2222</td>
                     <td style="border: 1px solid black; text-align: center;">เงินได้สุทธิ</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid black;">' . $data['net_income'] . '</td>
+                    <td style="border: 1px solid black;">333</td>
                 </tr>
                 <tr></tr>
                 <tr>

@@ -9,6 +9,7 @@ use App\Http\Controllers\CleamHistoryController;
 use App\Http\Controllers\ClientsController;
 use App\Http\Controllers\ColorController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ConfigTimeController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\DeductPaidController;
 use App\Http\Controllers\DeductTypeController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrdersController;
 use App\Http\Controllers\PaymentPeriodController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProductController;
@@ -189,6 +191,17 @@ Route::resource('deduct_paid', DeductPaidController::class);
 Route::post('/deduct_paid_page', [DeductPaidController::class, 'getPage']);
 Route::get('/get_deduct_paid/{userid}/{month}', [DeductPaidController::class, 'getList']);
 
+// config time
+Route::resource('config_late', ConfigTimeController::class);
+Route::post('/config_late_page', [ConfigTimeController::class, 'getPage']);
+Route::get('/get_config_late', [ConfigTimeController::class, 'getList']);
+
+// payroll
+Route::resource('payroll', PayrollController::class);
+Route::post('/payroll_page', [PayrollController::class, 'getPage']);
+Route::get('/get_payroll', [PayrollController::class, 'getList']);
+Route::post('/payroll_calculate', [PayrollController::class, 'payroll']);
+
 //Main Menu
 // Route::resource('main_menu', MainMenuController::class);
 // Route::get('/get_main_menu', [MainMenuController::class, 'getList']);
@@ -230,5 +243,5 @@ Route::get('/export_pdf_payroll/{id}', [Controller::class, 'pay_slip']);
 Route::post('/upload_file', [UploadController::class, 'uploadFile']);
 
 //export pdf excel word
-Route::get('/excel_payslip', [FileController::class,'excel_payslip']);
-Route::get('/pdf_payslip', [FileController::class,'pdf_payslip']);
+Route::get('/excel_payslip', [FileController::class, 'excel_payslip']);
+Route::get('/pdf_payslip', [FileController::class, 'pdf_payslip']);

@@ -156,6 +156,14 @@ class TimeAttendanceController extends Controller
 
             $Item->save();
 
+
+            $ItemU = User::where('user_no', $request->employee_no)->first();
+
+            if ($ItemU) {
+                $ItemU->name = $request->name;
+                $ItemU->save();
+            }
+
             //log
             $userId = "Admin";
             $type = 'เพิ่มประเภทงาน';
