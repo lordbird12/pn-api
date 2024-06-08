@@ -16,17 +16,10 @@ class CreateConfigTimesTable extends Migration
         Schema::create('config_times', function (Blueprint $table) {
             $table->increments('id');
 
-            $table->integer('purchase_requisition_id')->unsigned()->index();
-            $table->foreign('purchase_requisition_id')->references('id')->on('purchase_requisitions')->onDelete('cascade');
+            $table->integer('min_minute')->nullable();
+            $table->integer('max_minute')->nullable();
 
-            $table->integer('product_id')->unsigned()->index();
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-
-            $table->integer('supplier_id')->unsigned()->index();
-            $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('cascade');
-
-            $table->integer('qty')->nullable();
-            $table->integer('unit_price')->nullable();
+            $table->integer('deduct')->nullable();
 
             $table->text('detail')->nullable()->charset('utf8');
 

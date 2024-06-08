@@ -126,7 +126,16 @@ class TimeAttendanceController extends Controller
 
         try {
 
-            $Item = new TimeAttendance();
+            $Item = TimeAttendance::where('employee_no', $request->employee_no)
+                ->where('month', $request->month)
+                ->where('year', $request->year)
+                ->first();
+
+            if (!$Item) {
+                $Item = new TimeAttendance();
+            }
+
+
             $Item->employee_no = $request->employee_no;
             $Item->group_name = $request->group_name;
             $Item->absent_count = $request->absent_count;
