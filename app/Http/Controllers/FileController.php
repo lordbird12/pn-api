@@ -111,9 +111,12 @@ class FileController extends Controller
         if(!$user_no){
             return $this->DatareturnErrorData('ไม่พบข้อมูลที่ส่งมา', 404);
         }
-        // $month = $request->input('month', Carbon::now()->format('m'));
-        // $year = $request->input('year', Carbon::now()->format('Y'));
-
+        $month = $request->input('month', Carbon::now()->format('m'));
+        $year = $request->input('year', Carbon::now()->format('Y'));
+        $date = Carbon::now();
+        $thaiYear = $date->year + 543;
+        $thaiDate = $date->format('d/m') . '/' . $thaiYear;
+        // return $month;
         $users = User::where('user_no', $user_no)
                     //  ->whereYear('created_at', $year)
                     //  ->whereMonth('created_at', $month)
@@ -125,9 +128,15 @@ class FileController extends Controller
         // $income_type = IncomeType::where('code',$income_paids[0]->incode)->first();
         $total_income = 0;
         $total_deduction = 0;
-        $users->each(function ($user) {
-            $income_paids = IncomePaid::where('user_id', $user->id)->get();
-            $Deduct_paids = DeductPaid::where('user_id', $user->id)->get();
+        $users->each(function ($user) use (&$year,&$month) {
+            $income_paids = IncomePaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
+            $Deduct_paids = DeductPaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
 
             $income_paids->each(function ($income_paid) use (&$total_income) {
                 $income_type = IncomeType::where('code', $income_paid->incode)->first();
@@ -188,7 +197,7 @@ class FileController extends Controller
                     <td></td>
                     <td></td>
                     <td style="text-align: left;">วันที่สั่งจ่าย</td>
-                    <td style="text-align: left;">9/30/2566</td>
+                    <td style="text-align: left;">'.$thaiDate.'</td>
                 </tr>
                 <tr>
                     <th colspan="2" style="border: 1px solid black;">รายได้</th>
@@ -217,7 +226,7 @@ class FileController extends Controller
                         !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->income_type)
                         ? $users[0]->income_paids[$i]->income_type : '&nbsp;'
                     ). '</td>
-                    <td style="border: 1px solid black;">' . (
+                    <td style="border: 1px solid black; text-align: right;">' . (
                         !empty($users[0]) && !empty($users[0]->income_paids) && !empty($users[0]->income_paids[$i]) && !empty($users[0]->income_paids[$i]->paid)
                         ? $users[0]->income_paids[$i]->paid : null
                     ). '</td>
@@ -225,7 +234,7 @@ class FileController extends Controller
                         !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->Deduct_type)
                         ? $users[0]->Deduct_paids[$i]->Deduct_type : null
                     ). '</td>
-                    <td style="border: 1px solid black; color: red;">' . (
+                    <td style="border: 1px solid black; color: red; text-align: right;">' . (
                         !empty($users[0]) && !empty($users[0]->Deduct_paids) && !empty($users[0]->Deduct_paids[$i]) && !empty($users[0]->Deduct_paids[$i]->paid)
                         ? $users[0]->Deduct_paids[$i]->paid :null
                     ). '</td>
@@ -247,13 +256,13 @@ class FileController extends Controller
             $content .= '
                 <tr>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
-                    <td rowspan="2" style="border: 1px solid black;">' . $users[0]->total_income  .'</td>
+                    <td rowspan="2" style="border: 1px solid black; text-align: right;">' . $users[0]->total_income  .'</td>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; color: red; text-align: right;">รวมรายการหัก</td>
-                    <td rowspan="2" style="border: 1px solid black; color: red;">' . $users[0]->total_deduction . '</td>
+                    <td rowspan="2" style="border: 1px solid black; color: red; text-align: right">' . $users[0]->total_deduction . '</td>
                     <td style="border: 1px solid black; text-align: center;">เงินได้สุทธิ</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid black;">' . $users[0]->net_income . '</td>
+                    <td style="border: 1px solid black; text-align: center">' . $users[0]->net_income . '</td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
