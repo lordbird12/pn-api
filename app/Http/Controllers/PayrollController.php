@@ -163,69 +163,95 @@ class PayrollController extends Controller
 
         $users = User::get();
 
-        foreach ($users as $key => $value) {
+        try {
 
-            DB::beginTransaction();
-
-            $totalIncomeAmount = IncomePaid::where('user_id', $value['id'])
-                ->where('month', $month)
-                ->where('year', $year)
-                ->sum('paid');
-
-            $totalDeductAmount = DeductPaid::where('user_id', $value['id'])
-                ->where('month', $month)
-                ->where('year', $year)
-                ->sum('paid');
-
-            $sumary_times = TimeAttendance::where('month', $month)
-                ->where('year', $year)
-                ->where('employee_no', $value['user_no'])
-                ->first();
-
-            // try {
+            foreach ($users as $key => $value) {
 
 
-            $Item = Payroll::where('user_no', $value['user_no'])
-                ->where('month', $request->month)
-                ->where('year', $request->year)
-                ->first();
 
-            if (!$Item) {
-                $Item = new Payroll();
+                $totalIncomeAmount = IncomePaid::where('user_id', $value['id'])
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->sum('paid');
+
+                $totalDeductAmount = DeductPaid::where('user_id', $value['id'])
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->sum('paid');
+
+                $sumary_times = TimeAttendance::where('month', $month)
+                    ->where('year', $year)
+                    ->where('employee_no', $value['user_no'])
+                    ->first();
+
+
+
+
+                $Item = Payroll::where('user_no', $value['user_no'])
+                    ->where('month', $request->month)
+                    ->where('year', $request->year)
+                    ->first();
+
+                if (!$Item) {
+                    $Item = new Payroll();
+                }
+
+                $Item->user_no = $value['user_no'];
+                $Item->total_income = $totalIncomeAmount ? $totalIncomeAmount : 0;
+                $Item->total_deduct = $totalDeductAmount ? $totalDeductAmount : 0;
+
+                $sum_o_t =  $sumary_times->sum_o_t ?? 0;
+                $total_ot =  $sum_o_t * 0.666;
+                $Item->total_ot = $total_ot;
+
+                $sum_late = $sumary_times->sum_late ?? 0;
+                if ($sum_late > 31 && $sum_late < 45) {
+                    $sum_late =  $sum_late * 7;
+                } else if ($sum_late > 45) {
+                    $sum_late =  $sum_late * 14;
+                }
+                $sum_late =  $sum_late;
+
+                $salary_day = $value['salary'] / 30;
+
+                $sum_absent = $sumary_times->sum_absent ?? 0;
+                $sum_absent = $sum_absent * $salary_day;
+
+                $Item->total_late_deduct = $sum_late;
+                
+                $Item->salary = $value['salary'] ? $value['salary'] : 0;
+                $sum_income = $value['salary'] + $totalIncomeAmount + $total_ot;
+                $sum_deduct = $sum_late + $totalDeductAmount + $sum_absent;
+
+                $summary = $sum_income - $sum_deduct;
+             
+                $Item->total_summary = $summary ? $summary : 0;
+                $Item->month = $request->month;
+                $Item->year = $request->year;
+                $Item->create_by = "Admin";
+                $Item->updated_at = Carbon::now()->toDateTimeString();
+
+                $Item->save();
+                //
+
+                //log
+                $userId = "admin";
+                $type = 'เพิ่มรายการ';
+                $description = 'ผู้ใช้งาน ' . $userId . ' ได้ทำการ ' . $type . ' ' . $request->user_id;
+                $this->Log($userId, $description, $type);
+                //
+
+
             }
 
-            $Item->user_no = $value['user_no'];
-            $Item->total_income = $totalIncomeAmount ? $totalIncomeAmount : 0;
-            $Item->total_deduct = $totalDeductAmount ? $totalDeductAmount : 0;
-            $Item->total_ot = $sumary_times ? $sumary_times->sum_o_t : 0;
-            $Item->total_late_deduct = $sumary_times ? $sumary_times->sum_late : 0;
-            $Item->salary = $value['salary'] ? $value['salary'] : 0;
-            $Item->total_summary = $value['salary'] ? $value['salary'] : 0;
-            $Item->month = $request->month;
-            $Item->year = $request->year;
-            $Item->create_by = "Admin";
-            $Item->updated_at = Carbon::now()->toDateTimeString();
-
-            $Item->save();
-            //
-
-            //log
-            $userId = "admin";
-            $type = 'เพิ่มรายการ';
-            $description = 'ผู้ใช้งาน ' . $userId . ' ได้ทำการ ' . $type . ' ' . $request->user_id;
-            $this->Log($userId, $description, $type);
-            //
-
-            // DB::commit();
 
             return $this->returnSuccess('ดำเนินการสำเร็จ', $Item);
-            // } catch (\Throwable $e) {
+        } catch (\Throwable $e) {
 
 
-            //     DB::rollback();
 
-            //     return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ' . $e, 404);
-            // }
+
+            return $this->returnErrorData('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ' . $e, 404);
         }
     }
 }
