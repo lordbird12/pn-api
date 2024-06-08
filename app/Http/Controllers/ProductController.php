@@ -67,14 +67,19 @@ class ProductController extends Controller
         $type = $request->type;
         $status = $request->status;
         $brand_id = $request->brand_id;
+        $compane_id = $request->compane_id;
 
 
-        $col = array('id', 'status', 'mile', 'image', 'type', 'category_product_id', 'area_id', 'brand_id', 'brand_model_id', 'cc_id', 'color_id', 'name', 'detail', 'code', 'tank_no', 'engine_no', 'license_plate', 'year', 'sale_status', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $col = array('id', 'status', 'mile', 'image', 'type', 'category_product_id', 'companie_id', 'area_id', 'brand_id', 'brand_model_id', 'cc_id', 'color_id', 'name', 'detail', 'code', 'tank_no', 'engine_no', 'license_plate', 'year', 'sale_status', 'create_by', 'update_by', 'created_at', 'updated_at');
 
-        $orderby = array('id', 'status', 'mile', 'image', 'type', 'category_product_id', 'area_id', 'brand_id', 'brand_model_id', 'cc_id', 'color_id', 'name', 'detail', 'code', 'tank_no', 'engine_no', 'license_plate', 'year', 'sale_status', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $orderby = array('id', 'status', 'mile', 'image', 'type', 'category_product_id', 'companie_id', 'area_id', 'brand_id', 'brand_model_id', 'cc_id', 'color_id', 'name', 'detail', 'code', 'tank_no', 'engine_no', 'license_plate', 'year', 'sale_status', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $D = Products::select($col);
         // $D->where('sale_status', 'N');
+
+        if ($area_id) {
+            $D->where('companie_id', $compane_id);
+        }
 
         if ($area_id) {
             $D->where('area_id', $area_id);
@@ -135,9 +140,9 @@ class ProductController extends Controller
                     if ($d[$i]->area->image) {
                         $d[$i]->area->image = url($d[$i]->area->image);
                     }
-                    $d[$i]->companie = Company::find($d[$i]->area->companie_id);
+                    // $d[$i]->companie = Company::find($d[$i]->area->companie_id);
                 }
-
+                $d[$i]->companie = Company::find($d[$i]->companie_id);
 
                 for ($n = 0; $n <= count($d[$i]->images) - 1; $n++) {
                     $d[$i]->images[$n]->image = url($d[$i]->images[$n]->image);
@@ -235,6 +240,7 @@ class ProductController extends Controller
             $Item->code = $id;
             $Item->category_product_id = $request->category_product_id;
             $Item->pr_no = $request->pr_no;
+            $Item->companie_id = $request->companie_id;
             $Item->area_id = $request->area_id;
             $Item->brand_id = $request->brand_id;
             $Item->brand_model_id = $request->brand_model_id;
@@ -312,6 +318,7 @@ class ProductController extends Controller
             ->first();
 
         if ($Item) {
+            $Item->companie = Company::find($Item->companie_id);
             $Item->area = Area::find($Item->area_id);
             $Item->area->image = url($Item->area->image);
             $Item->supplier = Supplier::find($Item->supplier_id);
@@ -416,6 +423,7 @@ class ProductController extends Controller
             }
             $Item->category_product_id = $request->category_product_id;
             $Item->sub_category_product_id = $request->sub_category_product_id;
+            $Item->companie_id = $request->companie_id;
             $Item->area_id = $request->area_id;
             $Item->shelve_id = $request->shelve_id;
             $Item->floor_id = $request->floor_id;

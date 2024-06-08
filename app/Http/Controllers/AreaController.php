@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Products;
 use App\Models\Area;
+use App\Models\AreaCompany;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +23,10 @@ class AreaController extends Controller
                 $Item[$i]['No'] = $i + 1;
                 $Item[$i]['image'] = url($Item[$i]['image']);
                 $Item[$i]['products'] = Products::where('area_id', $Item[$i]['id'])->get();
-
+                $Item[$i]['companies'] = AreaCompany::where('area_id', $Item[$i]['id'])->get();
+                foreach ($Item[$i]['companies'] as $key => $value) {
+                    $Item[$i]['companies'][$key]['company'] = Company::find($value['companie_id']);
+                }
             }
         }
 
@@ -78,7 +83,10 @@ class AreaController extends Controller
                 $d[$i]->No = $No;
                 $d[$i]->image = url($d[$i]->image);
                 $d[$i]->products = Products::where('area_id', $d[$i]->id)->get();
-
+                $d[$i]->companies = AreaCompany::where('area_id', $d[$i]->id)->get();
+                foreach ($d[$i]->companies as $key => $value) {
+                    $d[$i]->companies[$key]->company = Company::find($value['companie_id']);
+                }
             }
         }
 
@@ -122,7 +130,7 @@ class AreaController extends Controller
 
         try {
             $Item = new Area();
-            $Item->companie_id = $request->companie_id;
+            // $Item->companie_id = $request->companie_id;
             $Item->name = $request->name;
             $Item->detail = $request->detail;
 
@@ -131,6 +139,15 @@ class AreaController extends Controller
             }
 
             $Item->save();
+
+
+            // foreach ($request->companies as $key => $value) {
+            //     $ItemA = new AreaCompany();
+            //     $ItemA->area_id = $Item->id;
+            //     $ItemA->companie_id = $value['companie_id'];
+
+            //     $ItemA->save();
+            // }
             //
 
             //log
@@ -167,7 +184,6 @@ class AreaController extends Controller
             $Item['image'] = url($Item['image']);
 
             $Item['products'] = Products::where('area_id', $Item['id'])->get();
-          
         }
 
         return $this->returnSuccess('เรียกดูข้อมูลสำเร็จ', $Item);
@@ -203,7 +219,7 @@ class AreaController extends Controller
 
         try {
             $Item = Area::find($id);
-            $Item->companie_id = $request->companie_id;
+            // $Item->companie_id = $request->companie_id;
             $Item->name = $request->name;
             $Item->detail = $request->detail;
 
@@ -212,6 +228,15 @@ class AreaController extends Controller
             }
 
             $Item->save();
+
+
+            // foreach ($request->companies as $key => $value) {
+            //     $ItemA = new AreaCompany();
+            //     $ItemA->area_id = $Item->id;
+            //     $ItemA->companie_id = $value['companie_id'];
+
+            //     $ItemA->save();
+            // }
             //
 
             //log

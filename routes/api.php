@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AreaCompanyController;
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\BrandModelController;
@@ -201,6 +202,11 @@ Route::resource('payroll', PayrollController::class);
 Route::post('/payroll_page', [PayrollController::class, 'getPage']);
 Route::get('/get_payroll', [PayrollController::class, 'getList']);
 Route::post('/payroll_calculate', [PayrollController::class, 'payroll']);
+
+// area companies
+Route::resource('area_companie', AreaCompanyController::class);
+Route::post('/area_companie_page', [AreaCompanyController::class, 'getPage']);
+Route::get('/get_area_companie', [AreaCompanyController::class, 'getList']);
 
 //Main Menu
 // Route::resource('main_menu', MainMenuController::class);

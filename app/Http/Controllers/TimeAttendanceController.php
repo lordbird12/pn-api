@@ -148,6 +148,7 @@ class TimeAttendanceController extends Controller
             $Item->sum_late = $request->sum_late;
             $Item->sum_o_t = $request->sum_o_t;
             $Item->total_workday = $request->total_workday;
+            $Item->total_forgot = $request->total_forgot;
             $Item->name = $request->name;
             $Item->month = $request->month;
             $Item->year = $request->year;
