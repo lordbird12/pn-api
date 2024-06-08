@@ -24,7 +24,7 @@
         <td style="text-align: left; width: 110px;"></td>
         <td style="text-align: left; width: 70px;"></td>
         <td style="text-align: left; width: 70px;">วิกที่</td>
-        <td style="text-align: left; width: 125px;">16-30/9/2566</td>
+        <td style="text-align: left; width: 125px;">{{ $data['weekly'] }}</td>
     </tr>
     <tr>
         <td style="text-align: left;">ตำแหน่ง</td>

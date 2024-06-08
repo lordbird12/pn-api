@@ -96,6 +96,7 @@ class FileController extends Controller
     {
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
+        $half = $request->input('half'); //First, Second
 
         $users = User::get();
         if ($users->isEmpty()) {
@@ -104,15 +105,31 @@ class FileController extends Controller
 
         // return $users;
 
-        $users->each(function ($user) use (&$year, &$month) {
+        $users->each(function ($user) use (&$year, &$month, &$half) {
+            $startDay = 1;
+            $endDay = 15;
+
+            if ($half === 'Second') {
+                $startDay = 16;
+                $endDay = Carbon::createFromDate($year, $month)->endOfMonth()->day;
+            }
+
+            $user->weekly = $startDay.'-'.$endDay.'/'.$month.'/'.$year;
+
+            $startDate = Carbon::createFromDate($year, $month, $startDay)->startOfDay();
+            $endDate = Carbon::createFromDate($year, $month, $endDay)->endOfDay();
+
             $income_paids = IncomePaid::where('user_id', $user->id)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
             $Deduct_paids = DeductPaid::where('user_id', $user->id)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where('year', $year)
+                ->where('month', $month)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
+
             $position = Position::find($user->position_id);
             $total_income = 0;
             $total_deduction = 0;
@@ -136,17 +153,28 @@ class FileController extends Controller
             $user->Deduct_paids = $Deduct_paids;
 
             $payroll = Payroll::where('user_no', $user->user_no)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where('year', $year)
+                ->where('month', $month)
+                ->whereBetween('updated_at', [$startDate, $endDate])
                 ->first();
+
             // $user->total_income = $total_income;
             // $user->total_deduction = $total_deduction;
             // $user->net_income = $total_income-$total_deduction;
-            $user->total_ot = $payroll->total_ot;
-            $user->total_late_deduct = $payroll->total_late_deduct;
-            $user->total_income = $payroll->total_income;
-            $user->total_deduction = $payroll->total_deduct;
-            $user->net_income = $payroll->total_summary;
+            if( $payroll ) {
+                $user->total_ot = $payroll->total_ot;
+                $user->total_late_deduct = $payroll->total_late_deduct;
+                $user->total_income = $payroll->total_income;
+                $user->total_deduction = $payroll->total_deduct;
+                $user->net_income = $payroll->total_summary;
+            }else{
+                $user->total_ot = 0;
+                $user->total_late_deduct = 0;
+                $user->total_income = 0;
+                $user->total_deduction = 0;
+                $user->net_income = 0;
+            }
+
         });
 
         $users = $users->toArray();
@@ -155,6 +183,7 @@ class FileController extends Controller
         $result = new salaryExport($users);
         return Excel::download($result, 'saraly.xlsx');
     }
+
     public function pdf_payslip(Request $request)
     {   //ฟิวเตอร์ name
         $user_no = $request->user_no;
@@ -163,32 +192,46 @@ class FileController extends Controller
         }
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
+        $half = $request->input('half'); //First, Second
 
         $date = Carbon::now();
         $thaiYear = $date->year + 543;
         $thaiDate = $date->format('d/m') . '/' . $thaiYear;
 
         $users = User::where('user_no', $user_no)
-            //  ->whereYear('created_at', $year)
-            //  ->whereMonth('created_at', $month)
             ->get();
 
         if ($users->isEmpty()) {
             return $this->returnErrorData('ไม่พบข้อมูลพนักงาน', 404);
         }
+
         $position = Position::find($users[0]->position_id);
+
+        $startDay = 1;
+        $endDay = 15;
+
+        if ($half === 'Second') {
+            $startDay = 16;
+            $endDay = Carbon::createFromDate($year, $month)->endOfMonth()->day;
+        }
+
+        $startDate = Carbon::createFromDate($year, $month, $startDay)->startOfDay();
+        $endDate = Carbon::createFromDate($year, $month, $endDay)->endOfDay();
 
         $total_incomes = 0;
         $total_deduction = 0;
 
-        $users->each(function ($user) use (&$year, &$month) {
+        $users->each(function ($user) use (&$year, &$month, &$half, &$startDate, &$endDate) {
+
             $income_paids = IncomePaid::where('user_id', $user->id)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where('year', $year)
+                ->where('month', $month)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
             $Deduct_paids = DeductPaid::where('user_id', $user->id)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
+                ->where('year', $year)
+                ->where('month', $month)
+                ->whereBetween('created_at', [$startDate, $endDate])
                 ->get();
 
             $income_paids->each(function ($income_paid) use (&$total_incomes) {
@@ -218,11 +261,12 @@ class FileController extends Controller
         }
 
         $payroll = Payroll::where('user_no', $user_no)
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->first();
         if(!$payroll){
-            return $this->returnErrorData('ไม่พบข้อมูลรายการ',404);
+            return $this->returnErrorData('ไม่พบข้อมูลรายการ payroll',404);
         }
         $content = '
             <table style="width: 100%; border-collapse: collapse; font-size: 20px;">
@@ -245,7 +289,7 @@ class FileController extends Controller
                     <td style="text-align: left; width: 110px;"></td>
                     <td style="text-align: left; width: 70px;"></td>
                     <td style="text-align: left; width: 70px;">วิกที่</td>
-                    <td style="text-align: left; width: 125px;">16-30/9/2566</td>
+                    <td style="text-align: left; width: 125px;">'. $startDay . '-' . $endDay . '/' . $month . '/' . ($year + 543) . '</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">ตำแหน่ง</td>
