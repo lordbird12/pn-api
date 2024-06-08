@@ -221,7 +221,9 @@ class FileController extends Controller
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->first();
-
+        if(!$payroll){
+            return $this->returnErrorData('ไม่พบข้อมูลรายการ',404);
+        }
         $content = '
             <table style="width: 100%; border-collapse: collapse; font-size: 20px;">
                 <tr>
