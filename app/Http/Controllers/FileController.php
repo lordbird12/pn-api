@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\salaryExport;
+use App\Models\Position;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -88,29 +89,39 @@ class FileController extends Controller
 
     public function excel_payslip(Request $request)
     {
-        $date = $request->input('date', Carbon::now()->format('Y-m'));
-        $Date = Carbon::createFromFormat('Y-m', $date);
+        $month = $request->input('month', Carbon::now()->format('m'));
+        $year = $request->input('year', Carbon::now()->format('Y'));
 
-        $users = User::whereYear('created_at', $Date->year)
-                    ->whereMonth('created_at', $Date->month)
-                    ->get();
+        $users = User::
+                    // whereYear('created_at', $year)
+                    // ->whereMonth('created_at', $month)
+                    get()->toArray();
 
-        return $users;
-
+        // return $users;
         $result = new salaryExport($users);
         return Excel::download($result, 'saraly.xlsx');
     }
     public function pdf_payslip(Request $request)
     {   //ฟิวเตอร์ name
         $user_no = $request->user_no;
-        $date = $request->date; // '2024-05'
-        $Date = Carbon::createFromFormat('Y-m', $date);
+        if(!$user_no){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลที่ส่งมา', 404);
+        }
+        // $month = $request->input('month', Carbon::now()->format('m'));
+        // $year = $request->input('year', Carbon::now()->format('Y'));
 
         $users = User::where('user_no', $user_no)
-                     ->whereYear('created_at', $Date->year)
-                     ->whereMonth('created_at', $Date->month)
+                    //  ->whereYear('created_at', $year)
+                    //  ->whereMonth('created_at', $month)
                      ->get();
+        // return $users[0]->position_id;
+        $position = Position::find($users[0]->position_id);
+        // return $position->name;
+        if($users->isEmpty()){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+        }
 
+        // return $users;
 
         $content = '
             <table style="width: 100%; border-collapse: collapse; font-size: 20px;">
@@ -128,7 +139,7 @@ class FileController extends Controller
                 </tr>
                 <tr>
                     <td style="text-align: left; width: 70px;">ชื่อพนักงาน</td>
-                    <td style="text-align: left; width: 200px;">' . $data['name'] . '</td>
+                    <td style="text-align: left; width: 200px;">' . $users[0]->name . '</td>
                     <td style="text-align: left; width: 65px;"></td>
                     <td style="text-align: left; width: 110px;"></td>
                     <td style="text-align: left; width: 70px;"></td>
@@ -137,7 +148,7 @@ class FileController extends Controller
                 </tr>
                 <tr>
                     <td style="text-align: left;">ตำแหน่ง</td>
-                    <td style="text-align: left;">ผู้บริหารร้าน</td>
+                    <td style="text-align: left;">'.$position->name.'</td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -152,16 +163,16 @@ class FileController extends Controller
                     <th style="border: 1px solid black;">หมายเหตุ</th>
                 </tr>';
 
-            foreach ($data['datasalary'] as $item) {
-                $content .= '
-                <tr>
-                    <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
-                    <td style="border: 1px solid black;">' . $item['income_amount'] . '</td>
-                    <td colspan="2" style="border: 1px solid black; color: red;">' . $item['deduction'] . '</td>
-                    <td style="border: 1px solid black; color: red;">' . $item['deduction_amount'] . '</td>
-                    <td style="border: 1px solid black;">' . $item['note'] . '</td>
-                </tr>';
-            }
+            // foreach ($data['datasalary'] as $item) {
+            //     $content .= '
+            //     <tr>
+            //         <td colspan="2" style="border: 1px solid black;">' . $item['income'] . '</td>
+            //         <td style="border: 1px solid black;">' . $item['income_amount'] . '</td>
+            //         <td colspan="2" style="border: 1px solid black; color: red;">' . $item['deduction'] . '</td>
+            //         <td style="border: 1px solid black; color: red;">' . $item['deduction_amount'] . '</td>
+            //         <td style="border: 1px solid black;">' . $item['note'] . '</td>
+            //     </tr>';
+            // }
 
             for ($i = 0; $i < 9; $i++) {
                 $content .= '
@@ -177,27 +188,32 @@ class FileController extends Controller
             $content .= '
                 <tr>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; text-align: right;">รวมรายการได้</td>
-                    <td rowspan="2" style="border: 1px solid black;">' . $data['total_income'] . '</td>
+                    <td rowspan="2" style="border: 1px solid black;">' . /*$data['total_income']*/  '</td>
                     <td colspan="2" rowspan="2" style="border: 1px solid black; color: red; text-align: right;">รวมรายการหัก</td>
-                    <td rowspan="2" style="border: 1px solid black; color: red;">' . $data['total_deduction'] . '</td>
+                    <td rowspan="2" style="border: 1px solid black; color: red;">' . /*$data['total_deduction']*/  '</td>
                     <td style="border: 1px solid black; text-align: center;">เงินได้สุทธิ</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid black;">' . $data['net_income'] . '</td>
+                    <td style="border: 1px solid black;">' . /*$data['net_income'] */ '</td>
                 </tr>
-                <tr></tr>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
                 <tr>
                     <td></td>
                     <td colspan="2">ผู้บันทึก..........................................................</td>
                     <td></td>
-                    <td colspan="2">ผู้รับเงิน..............................................................</td>
+                    <td colspan="3">ผู้รับเงิน..........................................................</td>
                 </tr>
                 <tr>
                     <td></td>
                     <td>(นางสาวอริษา แสนในเมือง)</td>
                     <td></td>
                     <td></td>
-                    <td>(นางสาวนาตยา นราวัฒน์)</td>
+                    <td colspan="3">(นางสาวนาตยา นราวัฒน์)</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
                 </tr>
                 <tr>
                     <td></td>
