@@ -16,19 +16,22 @@ class CreateTimeAttendancesTable extends Migration
         Schema::create('time_attendances', function (Blueprint $table) {
             $table->increments('id');
 
-            $table->string('user_no', 50)->charset('utf8')->nullable();
+            $table->string('employeeNo', 50)->charset('utf8')->nullable();
+            $table->string('groupName', 50)->charset('utf8')->nullable();
 
-            $table->date('date')->nullable();
+            $table->integer('absentCount')->nullable();
+            $table->integer('actualWorkday')->nullable();
+            $table->integer('lateCount')->nullable();
+            $table->double('percenWork', 10, 2)->default(0.00);
+            $table->integer('personalLeaveCount')->nullable();
+            $table->integer('sickLeaveCount')->nullable();
+            $table->double('sumEarly', 10, 2)->default(0.00);
+            $table->double('sumLate', 10, 2)->default(0.00);
+            $table->double('sumOT', 10, 2)->default(0.00);
+            $table->integer('totalWorkday')->nullable();
+            $table->string('name', 250)->charset('utf8')->nullable();
 
-            $table->string('time', 50)->charset('utf8')->nullable();
-
-            $table->enum('time_status', ['In', 'Out'])->charset('utf8')->default('In');
-
-            $table->integer('area_id')->nullable();
-
-            $table->string('location', 50)->charset('utf8')->nullable();
-
-            $table->string('ot', 10)->charset('utf8')->nullable();
+            $table->enum('status', ['Y', 'N'])->charset('utf8')->default('Y');
 
             $table->string('create_by', 100)->charset('utf8')->nullable();
             $table->string('update_by', 100)->charset('utf8')->nullable();

@@ -33,13 +33,23 @@ class DeductPaidController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        $month = $request->month;
+        $year = $request->year;
 
-        $col = array('id', 'user_id', 'decode', 'paid', 'month', 'remark', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $col = array('id', 'user_id', 'decode', 'paid', 'month', 'year', 'remark', 'create_by', 'update_by', 'created_at', 'updated_at');
 
-        $orderby = array('', 'user_id', 'decode', 'paid', 'month', 'remark', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $orderby = array('', 'user_id', 'decode', 'paid', 'month', 'year', 'remark', 'create_by', 'update_by', 'created_at', 'updated_at');
 
 
         $D = DeductPaid::select($col);
+
+        if ($month) {
+            $D->where('month', $month);
+        }
+
+        if ($year) {
+            $D->where('year', $year);
+        }
 
 
         if ($orderby[$order[0]['column']]) {
@@ -121,6 +131,7 @@ class DeductPaidController extends Controller
             $Item->decode = $request->decode;
             $Item->paid = $request->paid;
             $Item->month = $request->month;
+            $Item->year = $request->year;
             $Item->remark = $request->remark;
             $Item->create_by = "Admin";
             $Item->updated_at = Carbon::now()->toDateTimeString();
@@ -192,6 +203,7 @@ class DeductPaidController extends Controller
             $Item->decode = $request->decode;
             $Item->paid = $request->paid;
             $Item->month = $request->month;
+            $Item->year = $request->year;
             $Item->remark = $request->remark;
             $Item->create_by = "Admin";
             $Item->updated_at = Carbon::now()->toDateTimeString();

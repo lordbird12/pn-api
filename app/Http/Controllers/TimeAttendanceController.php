@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\TimeAttendanceImport;
 use App\Models\TimeAttendance;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -12,9 +13,9 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class TimeAttendanceController extends Controller
 {
-    public function getList()
+    public function getList($month, $year)
     {
-        $Item = TimeAttendance::get()->toarray();
+        $Item = TimeAttendance::where('month', $month)->where('year', $year)->get()->toarray();
 
         if (!empty($Item)) {
 
@@ -35,13 +36,22 @@ class TimeAttendanceController extends Controller
         $start = $request->start;
         $page = $start / $length + 1;
 
+        $month = $request->month;
+        $year = $request->year;
 
-        $col = array('id', 'user_no', 'date', 'time', 'time_status', 'location', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $col = array('id', 'employeeNo', 'groupName', 'absentCount', 'actualWorkday', 'lateCount', 'percenWork', 'personalLeaveCount', 'sickLeaveCount', 'sumEarly', 'sumLate', 'sumOT', 'totalWorkday', 'name', 'month', 'year', 'create_by', 'update_by', 'created_at', 'updated_at');
 
-        $orderby = array('', 'user_no', 'date', 'time', 'time_status', 'location', 'create_by', 'update_by', 'created_at', 'updated_at');
+        $orderby = array('', 'employeeNo', 'groupName', 'absentCount', 'actualWorkday', 'lateCount', 'percenWork', 'personalLeaveCount', 'sickLeaveCount', 'sumEarly', 'sumLate', 'sumOT', 'totalWorkday', 'name', 'month', 'year', 'create_by', 'update_by', 'created_at', 'updated_at');
 
         $D = TimeAttendance::select($col);
 
+        if ($month) {
+            $D->where('month', $month);
+        }
+
+        if ($year) {
+            $D->where('year', $year);
+        }
 
         if ($orderby[$order[0]['column']]) {
             $D->orderby($orderby[$order[0]['column']], $order[0]['dir']);
@@ -74,11 +84,6 @@ class TimeAttendanceController extends Controller
 
                 $No = $No + 1;
                 $d[$i]->No = $No;
-
-                if ($d[$i]->time_in) {
-                }
-                $d[$i]->time_in = $No;
-                $d[$i]->time_out = $No;
             }
         }
 
@@ -112,7 +117,52 @@ class TimeAttendanceController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        if (!isset($request->employee_no)) {
+            return $this->returnError('กรุณาระบุชื่อประเภทงานให้เรียบร้อย', 404);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $Item = new TimeAttendance();
+            $Item->employee_no = $request->employee_no;
+            $Item->group_name = $request->group_name;
+            $Item->absent_count = $request->absent_count;
+            $Item->actual_workday = $request->actual_workday;
+            $Item->late_count = $request->late_count;
+            $Item->percen_work = $request->percen_work;
+            $Item->personal_leave_count = $request->personal_leave_count;
+            $Item->sick_leave_count = $request->sick_leave_count;
+            $Item->sum_early = $request->sum_early;
+            $Item->sum_late = $request->sum_late;
+            $Item->sum_o_t = $request->sum_o_t;
+            $Item->total_workday = $request->total_workday;
+            $Item->name = $request->name;
+            $Item->month = $request->month;
+            $Item->year = $request->year;
+            $Item->create_by = "Admin";
+            $Item->updated_at = Carbon::now()->toDateTimeString();
+
+            $Item->save();
+
+            //log
+            $userId = "Admin";
+            $type = 'เพิ่มประเภทงาน';
+            $description = 'ผู้ใช้งาน ' . $userId . ' ได้ทำการ ' . $type . ' ' . $request->user_id;
+            $this->Log($userId, $description, $type);
+            //
+
+            DB::commit();
+
+            return $this->returnSuccess('ดำเนินการสำเร็จ', $Item);
+        } catch (\Throwable $e) {
+
+            DB::rollback();
+
+            return $this->returnError('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง ' . $e->getMessage());
+        }
     }
 
     /**
@@ -250,15 +300,15 @@ class TimeAttendanceController extends Controller
                     $timeIn = TimeAttendance::where('user_no', $Item[$i]['user_no'])->where('date', $request->date)->where('time_status', 'In')->orderBy('time', 'asc')->first();
                     $timeOut = TimeAttendance::where('user_no', $Item[$i]['user_no'])->where('date', $request->date)->where('time_status', 'Out')->orderBy('time', 'desc')->first();
 
-                    if(isset($timeIn)){
+                    if (isset($timeIn)) {
                         $Item[$i]['time_in'] = $timeIn->time;
-                    }else{
+                    } else {
                         $Item[$i]['time_in'] = "-";
                     }
 
-                    if(isset($timeOut)){
+                    if (isset($timeOut)) {
                         $Item[$i]['time_out'] = $timeOut->time;
-                    }else{
+                    } else {
                         $Item[$i]['time_out'] = "-";
                     }
 
@@ -269,18 +319,18 @@ class TimeAttendanceController extends Controller
                     $timeIn = TimeAttendance::where('user_no', $Item[$i]['user_no'])->where('date', date('Y-m-d'))->where('time_status', 'In')->orderBy('time', 'asc')->first();
                     $timeOut = TimeAttendance::where('user_no', $Item[$i]['user_no'])->where('date', date('Y-m-d'))->where('time_status', 'Out')->orderBy('time', 'desc')->first();
 
-                    if(isset($timeIn)){
+                    if (isset($timeIn)) {
                         $Item[$i]['time_in'] = $timeIn->time;
-                    }else{
+                    } else {
                         $Item[$i]['time_in'] = "-";
                     }
 
-                    if(isset($timeOut)){
+                    if (isset($timeOut)) {
                         $Item[$i]['time_out'] = $timeOut->time;
-                    }else{
+                    } else {
                         $Item[$i]['time_out'] = "-";
                     }
-        
+
                     $Item[$i]['No'] = $i + 1;
                 }
             }

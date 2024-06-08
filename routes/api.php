@@ -141,7 +141,7 @@ Route::get('/get_cleam/{id}', [CleamHistoryController::class, 'getList']);
 Route::resource('time', TimeAttendanceController::class);
 Route::post('/import_time', [TimeAttendanceController::class, 'Import']);
 Route::post('/time_page', [TimeAttendanceController::class, 'getPage']);
-Route::get('/get_time', [TimeAttendanceController::class, 'getList']);
+Route::get('/get_time/{month}/{year}', [TimeAttendanceController::class, 'getList']);
 Route::post('/get_time_check', [TimeAttendanceController::class, 'getTimeCheck']);
 
 // Payment
