@@ -43,18 +43,18 @@ class salarynameExport implements FromView, WithTitle
 
     public function view(): View
     {
-        $total_income = array_sum(array_column($this->datasalary, 'income_amount')); //รอปรับ
-        $total_deduction = array_sum(array_column($this->datasalary, 'deduction_amount')); //รอปรับ
-        $net_income = $total_income - $total_deduction;
+        // dd($this->datasalary);
+        // $total_income = array_sum(array_column($this->datasalary, 'total_income'));
+        // $total_deduction = array_sum(array_column($this->datasalary, 'total_deduction'));
+        // $net_income = $total_income - $total_deduction;
 
         return view('salarydata', [
-            'datasalary' => $this->datasalary,
+            'data' => $this->datasalary,
             'name' => $this->name,
-            'total_income' => $total_income,
-            'total_deduction' => $total_deduction,
-            'net_income' => $net_income,
+            // 'total_income' => $total_income,
+            // 'total_deduction' => $total_deduction,
+            // 'net_income' => $net_income,
         ]);
-
     }
 
     public function title(): string
