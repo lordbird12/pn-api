@@ -96,10 +96,50 @@ class FileController extends Controller
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
 
-        $users = User::
-                    // whereYear('created_at', $year)
-                    // ->whereMonth('created_at', $month)
-                    get()->toArray();
+        $users = User::get();
+
+        if($users->isEmpty()){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+        }
+
+        // return $users;
+
+        $users->each(function ($user) use (&$year,&$month) {
+            $income_paids = IncomePaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
+            $Deduct_paids = DeductPaid::where('user_id', $user->id)
+                                        ->whereYear('created_at', $year)
+                                        ->whereMonth('created_at', $month)
+                                        ->get();
+            $position = Position::find($user->position_id);
+            $total_income = 0;
+            $total_deduction = 0;
+
+            $income_paids->each(function ($income_paid) use (&$total_income) {
+                $income_type = IncomeType::where('code', $income_paid->incode)->first();
+                if ($income_type) {
+                    $income_paid->income_type = $income_type->name;
+                    $total_income += $income_paid->paid;
+                }
+            });
+            $Deduct_paids->each(function ($Deduct_paid) use (&$total_deduction) {
+                $Deduct_type = DeductType::where('code', $Deduct_paid->decode)->first();
+                if ($Deduct_type) {
+                    $Deduct_paid->Deduct_type = $Deduct_type->name;
+                    $total_deduction += $Deduct_paid->paid;
+                }
+            });
+            $user->position = $position->name;
+            $user->income_paids = $income_paids;
+            $user->Deduct_paids = $Deduct_paids;
+            $user->total_income = $total_income;
+            $user->total_deduction = $total_deduction;
+            $user->net_income = $total_income-$total_deduction;
+        });
+
+        $users = $users->toArray();
 
         // return $users;
         $result = new salaryExport($users);
@@ -113,6 +153,7 @@ class FileController extends Controller
         }
         $month = $request->input('month', Carbon::now()->format('m'));
         $year = $request->input('year', Carbon::now()->format('Y'));
+
         $date = Carbon::now();
         $thaiYear = $date->year + 543;
         $thaiDate = $date->format('d/m') . '/' . $thaiYear;
@@ -122,6 +163,10 @@ class FileController extends Controller
                     //  ->whereMonth('created_at', $month)
                      ->get();
         // return $users[0]->position_id;
+        // return $position->name;
+        if($users->isEmpty()){
+            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
+        }
         $position = Position::find($users[0]->position_id);
         // $income_paids = IncomePaid::where('user_id',$users[0]->id)
         //     ->get();
@@ -158,12 +203,6 @@ class FileController extends Controller
             $user->total_deduction = $total_deduction;
             $user->net_income = $total_income-$total_deduction;
         });
-
-
-        // return $position->name;
-        if($users->isEmpty()){
-            return $this->DatareturnErrorData('ไม่พบข้อมูลพนักงาน', 404);
-        }
 
         // return $users;
 
