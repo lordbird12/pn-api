@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\DeductPaidController;
 use App\Http\Controllers\DeductTypeController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\IncomePaidController;
 use App\Http\Controllers\IncomeTypeController;
@@ -227,3 +228,7 @@ Route::get('/export_pdf_payroll/{id}', [Controller::class, 'pay_slip']);
 //upload
 
 Route::post('/upload_file', [UploadController::class, 'uploadFile']);
+
+//export pdf excel word
+Route::get('/excel_payslip', [FileController::class,'excel_payslip']);
+Route::get('/pdf_payslip', [FileController::class,'pdf_payslip']);
